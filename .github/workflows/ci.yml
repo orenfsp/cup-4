@@ -58,3 +58,22 @@ jobs:
       - name: Stop Compose
         if: always()
         run: docker compose down -v
+
+  deploy:
+    name: Deploy on self-hosted machine
+    runs-on: [self-hosted, linux, x64, otklik]
+    needs: [web, compose]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout pushed commit
+        uses: actions/checkout@v4
+
+      - name: Build and restart service
+        run: docker compose up --build -d --wait
+
+      - name: Check deployed readiness
+        run: curl --fail --silent --show-error http://localhost:8080/api/ready/
+
+      - name: Show deployed service status
+        run: docker compose ps
