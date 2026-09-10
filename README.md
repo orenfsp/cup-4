@@ -5,10 +5,13 @@ Django / Python 3.12, React / TypeScript / Vite, PostgreSQL 17, Nginx.
 
 ## Запуск
 
+Для редактирования окружения запуска измените .env, для стандартного запуска на localhost:8080 оставьте как есть
+
 ```sh
 cp .env.example .env
 docker compose up --build -d --wait
 ```
+Зайти на localhost:8080
 
 Если не создались пользователи:
 ```sh
