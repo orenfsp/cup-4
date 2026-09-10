@@ -8,32 +8,15 @@ Django / Python 3.12, React / TypeScript / Vite, PostgreSQL 17, Nginx.
 ```sh
 cp .env.example .env
 docker compose up --build -d --wait
-curl http://localhost:8080/api/ready/
-npm ci
-npm run check
-```
-Ожидается {"status": "ok"}
-
-если не создались креды
-
-```sh
-docker compose exec -e DEMO_MODE=1 api python apps/api/manage.py seed_demo
 ```
 
-Открыть http://localhost:8080. Если порт занят исходным проектом, задайте
-`WEB_PORT=8081` в `.env` и откройте http://localhost:8081.
-Имя Compose-проекта — `otklik-team`: база и volumes отдельные от исходного проекта.
-Миграции выполняются при запуске API, секреты генерируются в приватном volume.
-
-Для локальной демонстрации создайте тестовых сотрудников:
-
+Если не создались пользователи:
 ```sh
 docker compose exec -e DEMO_MODE=1 api python apps/api/manage.py seed_demo
 ```
 
 Логины: `demo-operator`, `demo-expert`, `demo-expert-2`, `demo-admin`.
-Общий **тестовый** пароль: `DemoOnly-Otklik-2026!`. Не используйте демо-режим
-для реальных обращений. Кабинет сотрудника доступен со стартовой страницы.
+Общий **тестовый** пароль: `DemoOnly-Otklik-2026!`.
 
 Заявитель подаёт обращение, сохраняет секретный код и возвращается по нему.
 Оператор назначает специалиста; эксперт отвечает; заявитель завершает обращение
