@@ -14,3 +14,4 @@ for schema in API_SCHEMAS.values():
 QUESTIONS = json.loads((ROOT / "questions.json").read_text())
 
 CRISIS_RULES = json.loads((ROOT / "crisis.rules.json").read_text())
+STREAM_EVENTS: dict[str, str] = json.loads((ROOT / "stream.events.json").read_text())

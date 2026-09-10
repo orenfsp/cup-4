@@ -10,4 +10,4 @@ COPY pyproject.toml /app/pyproject.toml
 
 FROM base AS runtime
 USER otklik
-CMD ["sh", "-c", "python apps/api/manage.py migrate --noinput && exec gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 1 --threads 4 --timeout 30 --error-logfile /dev/null"]
+CMD ["sh", "-c", "python apps/api/manage.py migrate --noinput && exec gunicorn config.asgi:application --worker-class asgi --asgi-lifespan off --bind 0.0.0.0:8000 --workers 1 --worker-connections 256 --timeout 30 --error-logfile /dev/null"]

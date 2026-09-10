@@ -1,5 +1,6 @@
 import crisisRules from "../crisis.rules.json";
 import enums from "../enums.json";
+export { default as streamEvents } from "../stream.events.json";
 export { enums };
 export type ApplicantType = keyof typeof enums.applicantTypes;
 export type EntryPath = keyof typeof enums.entryPaths;

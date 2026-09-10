@@ -1,22 +1,20 @@
 import logging
 import time
-from collections.abc import Callable
 
 from django.http import HttpRequest, HttpResponse
 from django.utils.cache import patch_cache_control
+from django.utils.deprecation import MiddlewareMixin
 
 from infrastructure.http import APIError, error_response
 
 logger = logging.getLogger("otklik.requests")
 
 
-class SafeAPIMiddleware:
-    def __init__(self, get_response: Callable[[HttpRequest], HttpResponse]) -> None:
-        self.get_response = get_response
+class SafeAPIMiddleware(MiddlewareMixin):
+    def process_request(self, request: HttpRequest) -> None:
+        request.META["otklik_started"] = time.monotonic()
 
-    def __call__(self, request: HttpRequest) -> HttpResponse:
-        start = time.monotonic()
-        response = self.get_response(request)
+    def process_response(self, request: HttpRequest, response: HttpResponse) -> HttpResponse:
         if request.path.startswith("/api/"):
             patch_cache_control(response, no_store=True, private=True)
             route = request.resolver_match.url_name if request.resolver_match else "unmatched"
@@ -24,7 +22,7 @@ class SafeAPIMiddleware:
                 "route=%s status=%d duration_ms=%d",
                 route,
                 response.status_code,
-                int((time.monotonic() - start) * 1000),
+                int((time.monotonic() - request.META["otklik_started"]) * 1000),
             )
         return response
 

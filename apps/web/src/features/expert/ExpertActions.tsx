@@ -27,9 +27,9 @@ export function ExpertActions({
   const base = `/api/staff/appeals/${appeal.id}/`;
   const collaboration = useResource<Collaboration>(
     base + "collaboration/",
-    5000,
+    15000,
   );
-  const routing = useResource<RoutingSuggestion>(base + "routing/", 5000);
+  const routing = useResource<RoutingSuggestion>(base + "routing/", 15000);
   const active = [
     "assigned",
     "in_progress",

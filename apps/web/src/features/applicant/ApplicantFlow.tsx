@@ -393,6 +393,7 @@ function ApplicantCase({
   const resource = useResource<{ appeal: AppealView }>(
     `/api/applicant/appeals/${id}/`,
     5000,
+    `/api/applicant/appeals/${id}/stream/`,
   );
   const [error, setError] = useState<unknown>();
   const [busy, setBusy] = useState(false);

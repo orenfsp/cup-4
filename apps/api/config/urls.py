@@ -1,5 +1,6 @@
 from appeals import analytics
 from appeals import views as appeals
+from appeals.stream import stream
 from django.urls import path
 from health.views import health, ready
 from routing import administration
@@ -7,6 +8,8 @@ from routing import views as routing
 from staff import views as staff
 
 urlpatterns = [
+    path("api/applicant/appeals/<uuid:appeal_id>/stream/", stream, name="applicant-stream"),
+    path("api/staff/appeals/<uuid:appeal_id>/stream/", stream, name="staff-stream"),
     path("api/staff/configuration/", administration.configuration, name="configuration"),
     path("api/staff/configuration/actions/", administration.update, name="configuration-update"),
     path("api/staff/analytics/", analytics.report, name="analytics"),

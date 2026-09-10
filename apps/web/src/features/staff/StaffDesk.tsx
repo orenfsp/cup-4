@@ -376,6 +376,7 @@ function StaffCase({
   const resource = useResource<{ appeal: AppealView }>(
     `/api/staff/appeals/${id}/`,
     5000,
+    user.role === "expert" ? `/api/staff/appeals/${id}/stream/` : "",
   );
   const changed = (updated?: AppealView) => {
     if (updated) resource.update({ appeal: updated });

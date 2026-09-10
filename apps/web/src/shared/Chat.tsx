@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import type { AppealView, ChatMessage } from "@otklik/contracts";
 import { api } from "./api";
 import { useResource } from "./useResource";
@@ -17,7 +17,50 @@ export function Chat({
   changed: (appeal?: AppealView) => void;
 }) {
   const base = `/api/${staff ? "staff" : "applicant"}/appeals/${appeal.id}/`;
-  const resource = useResource<Messages>(base + "messages/", 5000);
+  const history = useRef<{ path: string; data: Messages } | undefined>(
+    undefined,
+  );
+  const loadMessages = useCallback(
+    async (path: string, signal: AbortSignal) => {
+      const previous =
+        history.current?.path === path ? history.current.data : undefined;
+      let page = await api<Messages>(path, undefined, signal);
+      const fresh = [...page.messages];
+      const last = previous?.messages.at(-1)?.id;
+      // A reconnect can miss more than the latest 100 messages. Fill the gap
+      // through the existing protected pagination before publishing new state.
+      while (
+        last !== undefined &&
+        page.has_more &&
+        page.messages[0]?.id > last
+      ) {
+        page = await api<Messages>(
+          path + `?before=${page.messages[0].id}`,
+          undefined,
+          signal,
+        );
+        fresh.unshift(...page.messages);
+      }
+      const messages = [
+        ...new Map(
+          [...(previous?.messages ?? []), ...fresh].map((m) => [m.id, m]),
+        ).values(),
+      ].sort((a, b) => a.id - b.id);
+      const result = {
+        messages,
+        has_more: previous?.has_more ?? page.has_more,
+      };
+      if (!signal.aborted) history.current = { path, data: result };
+      return result;
+    },
+    [],
+  );
+  const resource = useResource<Messages>(
+    base + "messages/",
+    5000,
+    base + "stream/",
+    loadMessages,
+  );
   const [older, setOlder] = useState<ChatMessage[]>([]);
   const [more, setMore] = useState<boolean>();
   const [text, setText] = useState("");
