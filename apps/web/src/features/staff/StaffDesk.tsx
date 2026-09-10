@@ -116,9 +116,17 @@ function Desk({
       {Boolean(catalog.error) && (
         <Problem error={catalog.error} retry={catalog.reload} />
       )}
-      <button onClick={() => setAnalytics(!analytics)}>
-        {analytics ? "К рабочему месту" : "Открыть аналитику"}
-      </button>
+      <div className="staff-toolbar">
+        <button onClick={() => setAnalytics(!analytics)}>
+          {analytics ? "К рабочему месту" : "Открыть аналитику"}
+        </button>
+        {user.role === "admin" && !analytics && (
+          <p className="staff-toolbar-note">
+            Настройки, вмешательство и журнал — ниже. Содержание обращений
+            администратору недоступно.
+          </p>
+        )}
+      </div>
       {analytics ? (
         <Analytics />
       ) : user.role === "admin" ? (
