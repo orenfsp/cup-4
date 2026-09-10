@@ -8,8 +8,18 @@
 
 Параметры окружения задаются в файле `.env`. Для стандартного локального запуска на `localhost:8080` достаточно использовать значения из `.env.example` без изменений:
 
-```sh
+```
+# Linux / macOS
 cp .env.example .env
+
+# Windows (PowerShell)
+Copy-Item .env.example .env
+
+# Windows (CMD)
+copy .env.example .env
+```
+
+```sh
 docker compose up --build -d --wait
 ```
 
