@@ -3,11 +3,21 @@
 Платформа анонимных обращений школьников, родителей и педагогов.
 Django / Python 3.12, React / TypeScript / Vite, PostgreSQL 17, Nginx.
 
-## Запуск
+## Запуск и проверка
 
 ```sh
 cp .env.example .env
 docker compose up --build -d --wait
+curl http://localhost:8080/api/ready/
+npm ci
+npm run check
+```
+Ожидается {"status": "ok"}
+
+если не создались креды
+
+```sh
+docker compose exec -e DEMO_MODE=1 api python apps/api/manage.py seed_demo
 ```
 
 Открыть http://localhost:8080. Если порт занят исходным проектом, задайте
