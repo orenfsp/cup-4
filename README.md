@@ -3,7 +3,7 @@
 Платформа анонимных обращений школьников, родителей и педагогов.
 Django / Python 3.12, React / TypeScript / Vite, PostgreSQL 17, Nginx.
 
-## Запуск и проверка
+## Запуск
 
 ```sh
 cp .env.example .env
