@@ -1,0 +1,89 @@
+name: otklik-team
+x-api-environment: &api-environment
+  DJANGO_SECRET_KEY_FILE: /secrets/django_key
+  CONTACT_KEY_FILE: /secrets/contact_key
+  POSTGRES_PASSWORD_FILE: /secrets/database_password
+  POSTGRES_HOST: db
+  POSTGRES_DB: otklik
+  POSTGRES_USER: otklik
+  DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:-localhost,127.0.0.1,api,web}
+  COOKIE_SECURE: ${COOKIE_SECURE:-0}
+  TRUSTED_PROXY_HOSTS: web
+services:
+  init:
+    image: python:3.12-slim
+    network_mode: none
+    volumes:
+      - app_secrets:/secrets
+      - ./scripts/init-secrets.py:/init-secrets.py:ro
+      - attachments:/private/attachments
+    command: ["python", "/init-secrets.py"]
+  db:
+    image: postgres:17.11-alpine
+    # SQL errors can contain private values even without statement logging.
+    command: ["postgres", "-c", "log_min_messages=panic", "-c", "log_min_error_statement=panic", "-c", "log_error_verbosity=terse", "-c", "log_statement=none", "-c", "log_parameter_max_length=0", "-c", "log_parameter_max_length_on_error=0"]
+    environment:
+      POSTGRES_DB: otklik
+      POSTGRES_USER: otklik
+      POSTGRES_PASSWORD_FILE: /secrets/database_password
+    volumes:
+      - database:/var/lib/postgresql/data
+      - app_secrets:/secrets:ro
+    depends_on:
+      init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U otklik -d otklik"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+      target: runtime
+    environment: *api-environment
+    volumes:
+      - app_secrets:/secrets:ro
+      - attachments:/private/attachments
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/ready/', timeout=5)"]
+      interval: 5s
+      timeout: 6s
+      retries: 15
+      start_period: 10s
+  maintenance:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+      target: runtime
+    environment: *api-environment
+    volumes:
+      - app_secrets:/secrets:ro
+    depends_on:
+      api:
+        condition: service_healthy
+    command: ["sh", "-c", "while true; do python apps/api/manage.py close_stale_appeals; sleep 60; done"]
+    restart: unless-stopped
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    ports:
+      - "${WEB_BIND:-127.0.0.1}:${WEB_PORT:-8080}:80"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1/"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  database:
+  app_secrets:
+  attachments:

@@ -1,0 +1,242 @@
+{
+  "create": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "applicant_type": {
+        "$ref": "#/$defs/applicantTypes"
+      },
+      "entry_path": {
+        "$ref": "#/$defs/entryPaths"
+      },
+      "original_text": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 10000,
+        "pattern": "\\S"
+      },
+      "category": {
+        "type": "string",
+        "pattern": "^[a-z0-9_-]{1,64}$"
+      },
+      "answers": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "where": {
+            "enum": [
+              "school",
+              "online",
+              "home",
+              "elsewhere"
+            ]
+          },
+          "duration": {
+            "enum": [
+              "once",
+              "recent",
+              "long"
+            ]
+          },
+          "people": {
+            "enum": [
+              "peers",
+              "adults",
+              "both"
+            ]
+          },
+          "support": {
+            "enum": [
+              "yes",
+              "no"
+            ]
+          },
+          "safety": {
+            "enum": [
+              "safe",
+              "danger",
+              "self_harm",
+              "unsure"
+            ]
+          }
+        }
+      },
+      "crisis_contact": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "consent": {
+            "const": true
+          },
+          "value": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 250,
+            "pattern": "\\S"
+          }
+        },
+        "required": [
+          "consent",
+          "value"
+        ]
+      }
+    },
+    "required": [
+      "applicant_type",
+      "entry_path",
+      "original_text"
+    ]
+  },
+  "code": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "code": {
+        "type": "string",
+        "maxLength": 80
+      }
+    },
+    "required": [
+      "code"
+    ]
+  },
+  "login": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "username": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 150
+      },
+      "password": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 256
+      }
+    },
+    "required": [
+      "username",
+      "password"
+    ]
+  },
+  "action": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "action": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 32
+      },
+      "expected_version": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 2147483647
+      },
+      "expert_id": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 2147483647
+      },
+      "transfer_id": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 2147483647
+      },
+      "reason": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 2000,
+        "pattern": "\\S"
+      },
+      "priority": {
+        "$ref": "#/$defs/priorities"
+      },
+      "text": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 10000,
+        "pattern": "\\S"
+      },
+      "category": {
+        "type": "string",
+        "pattern": "^[a-z0-9_-]{1,64}$"
+      },
+      "rating": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 5
+      },
+      "comment": {
+        "type": "string",
+        "maxLength": 2000
+      },
+      "crisis_contact": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "consent": {
+            "const": true
+          },
+          "value": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 250,
+            "pattern": "\\S"
+          }
+        },
+        "required": [
+          "consent",
+          "value"
+        ]
+      }
+    },
+    "required": [
+      "action",
+      "expected_version"
+    ]
+  },
+  "empty": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {},
+    "required": []
+  },
+  "administration": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "resource",
+      "data",
+      "reason",
+      "expected_version"
+    ],
+    "properties": {
+      "resource": {
+        "enum": [
+          "category",
+          "group",
+          "rule",
+          "staff",
+          "limits"
+        ]
+      },
+      "data": {
+        "type": "object",
+        "maxProperties": 10
+      },
+      "reason": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 2000,
+        "pattern": "\\S"
+      },
+      "expected_version": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 2147483647
+      }
+    }
+  }
+}

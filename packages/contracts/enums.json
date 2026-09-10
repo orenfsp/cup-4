@@ -1,0 +1,32 @@
+{
+  "applicantTypes": {
+    "student": "Школьник",
+    "parent": "Родитель",
+    "teacher": "Педагог"
+  },
+  "entryPaths": {
+    "category": "Выбрать ситуацию",
+    "story": "Рассказать своими словами"
+  },
+  "appealStatuses": {
+    "new": "Новое",
+    "assigned": "Распределено",
+    "in_progress": "В работе",
+    "needs_info": "Нужно уточнение",
+    "answer_ready": "Ответ готов",
+    "returned": "Возвращено",
+    "completed": "Завершено",
+    "rejected": "Отклонено",
+    "closed_no_response": "Закрыто без ответа"
+  },
+  "priorities": {
+    "standard": "Стандарт",
+    "urgent": "Срочно",
+    "low": "Низкий"
+  },
+  "staffRoles": {
+    "operator": "Оператор",
+    "expert": "Эксперт",
+    "admin": "Администратор"
+  }
+}
