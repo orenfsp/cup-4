@@ -27,7 +27,7 @@ export function ExpertActions({
   const base = `/api/staff/appeals/${appeal.id}/`;
   const collaboration = useResource<Collaboration>(
     base + "collaboration/",
-    15000,
+    5000,
   );
   const routing = useResource<RoutingSuggestion>(base + "routing/", 15000);
   const active = [
@@ -81,132 +81,170 @@ export function ExpertActions({
     }
   };
   return (
-    <>
-      <Participants data={collaboration.data} />
-      {Boolean(collaboration.error) && (
-        <Problem error={collaboration.error} retry={collaboration.reload} />
-      )}
-      {active && (
-        <section className="notice">
-          <p>
-            {owns
-              ? "Вы можете отправлять ответы."
-              : lease
-                ? "Ответ готовит другой специалист. Чтение доступно; отправка временно заблокирована."
-                : "Отправка свободна. Подключитесь к работе, чтобы ответить."}
-          </p>
-          {appeal.status === "assigned" && appeal.responsible_id === user.id ? (
-            <button
-              disabled={busy}
-              onClick={() => void action({ action: "start" })}
-            >
-              Взять в работу
-            </button>
-          ) : (
-            <button
-              disabled={busy || Boolean(lease && !owns)}
-              onClick={() =>
-                void action({ action: owns ? "release_lease" : "claim_lease" })
-              }
-            >
-              {owns ? "Освободить отправку" : "Подключиться к работе"}
-            </button>
+    <div className="expert-console">
+      <div className="expert-main">
+        {active && (
+          <section className={`expert-access ${owns ? "is-owned" : ""}`}>
+            <div>
+              <p className="eyebrow">Режим работы</p>
+              <strong>
+                {owns
+                  ? "Можно отвечать заявителю"
+                  : lease
+                    ? "Ответ готовит другой специалист"
+                    : "Подключитесь, чтобы отвечать"}
+              </strong>
+              <p>
+                {owns
+                  ? "Отправка закреплена за вами, пока вы работаете в карточке."
+                  : lease
+                    ? "Чтение доступно. Отправка временно заблокирована."
+                    : "Сейчас отправка свободна."}
+              </p>
+            </div>
+            {appeal.status === "assigned" &&
+            appeal.responsible_id === user.id ? (
+              <button
+                className="primary"
+                disabled={busy}
+                onClick={() => void action({ action: "start" })}
+              >
+                Взять в работу
+              </button>
+            ) : (
+              <button
+                className={owns ? "secondary" : "primary"}
+                disabled={busy || Boolean(lease && !owns)}
+                onClick={() =>
+                  void action({
+                    action: owns ? "release_lease" : "claim_lease",
+                  })
+                }
+              >
+                {owns ? "Освободить отправку" : "Подключиться к работе"}
+              </button>
+            )}
+          </section>
+        )}
+        {Boolean(error) && <Problem error={error} />}
+        <Chat appeal={appeal} staff changed={changed} writingAllowed={owns} />
+      </div>
+
+      <aside
+        className="expert-sidebar"
+        aria-label="Рабочие инструменты эксперта"
+      >
+        <div className="expert-participants">
+          <Participants data={collaboration.data} />
+          {Boolean(collaboration.error) && (
+            <Problem error={collaboration.error} retry={collaboration.reload} />
+          )}
+        </div>
+
+        <section className="internal-notes expert-tool">
+          <p className="eyebrow">Только для команды</p>
+          <h3>Внутренние заметки</h3>
+          <p className="muted">Заявитель и оператор не увидят эти записи.</p>
+          <div className="note-list">
+            {collaboration.data?.notes?.length === 0 && (
+              <p className="empty">Заметок пока нет.</p>
+            )}
+            {collaboration.data?.notes?.map((n) => (
+              <p className="preserve note-item" key={n.id}>
+                {n.text}
+              </p>
+            ))}
+          </div>
+          {active && (
+            <>
+              <label>
+                Внутренняя заметка
+                <textarea
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  maxLength={5000}
+                  rows={3}
+                  placeholder="Наблюдение для других специалистов"
+                />
+              </label>
+              <button
+                disabled={busy || !owns || !note.trim()}
+                onClick={() => void action({ action: "add_note", text: note })}
+              >
+                Сохранить заметку
+              </button>
+            </>
           )}
         </section>
-      )}
-      <section className="internal-notes">
-        <h3>Внутренние заметки</h3>
-        <p>
-          Только для участников-специалистов. Заявителю и оператору недоступны.
-        </p>
-        {collaboration.data?.notes?.length === 0 && <p>Заметок пока нет.</p>}
-        {collaboration.data?.notes?.map((n) => (
-          <p className="preserve" key={n.id}>
-            {n.text}
-          </p>
-        ))}
+
         {active && (
-          <>
+          <section className="expert-tool operator-request">
+            <p className="eyebrow">Нужно решение оператора</p>
+            <h3>Запрос по обращению</h3>
             <label>
-              Внутренняя заметка
+              Причина запроса
               <textarea
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                maxLength={5000}
+                placeholder="Коротко объясните, что требуется"
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                maxLength={2000}
+                rows={3}
               />
             </label>
-            <button
-              disabled={busy || !owns || !note.trim()}
-              onClick={() => void action({ action: "add_note", text: note })}
-            >
-              Сохранить заметку
-            </button>
-          </>
+            {Boolean(routing.error) && (
+              <Problem error={routing.error} retry={routing.reload} />
+            )}
+            <label>
+              Передать запрос специалисту
+              <select
+                value={target ?? ""}
+                onChange={(e) => setTarget(Number(e.target.value))}
+              >
+                <option value="" disabled>
+                  Выбрать специалиста
+                </option>
+                {routing.data?.experts
+                  .filter((e) => e.id !== user.id)
+                  .map((e) => (
+                    <option key={e.id} value={e.id} disabled={!e.available}>
+                      {e.username} · {e.load}/{e.limit}
+                    </option>
+                  ))}
+              </select>
+            </label>
+            <div className="request-actions">
+              <button
+                disabled={busy || !owns || !reason.trim() || !target}
+                onClick={() =>
+                  void action({
+                    action: "request_transfer",
+                    expert_id: target,
+                    reason,
+                  })
+                }
+              >
+                Передать запрос оператору
+              </button>
+              <button
+                disabled={busy || !reason.trim()}
+                onClick={() =>
+                  void action({ action: "request_coexecutor", reason })
+                }
+              >
+                Запросить соисполнителя
+              </button>
+              <button
+                disabled={busy || !reason.trim()}
+                onClick={() =>
+                  void action({ action: "request_priority", reason })
+                }
+              >
+                Запросить пересмотр приоритета
+              </button>
+            </div>
+          </section>
         )}
-      </section>
-      {active && (
-        <section className="notice">
-          <h3>Запрос оператору</h3>
-          <label>
-            Причина запроса
-            <textarea
-              placeholder="Почему нужен другой специалист"
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-              maxLength={2000}
-            />
-          </label>
-          {Boolean(routing.error) && (
-            <Problem error={routing.error} retry={routing.reload} />
-          )}
-          <label>
-            Передать запрос специалисту
-            <select
-              value={target ?? ""}
-              onChange={(e) => setTarget(Number(e.target.value))}
-            >
-              <option value="" disabled>
-                Выбрать специалиста
-              </option>
-              {routing.data?.experts
-                .filter((e) => e.id !== user.id)
-                .map((e) => (
-                  <option key={e.id} value={e.id} disabled={!e.available}>
-                    {e.username} · {e.load}/{e.limit}
-                  </option>
-                ))}
-            </select>
-          </label>
-          <button
-            disabled={busy || !owns || !reason.trim() || !target}
-            onClick={() =>
-              void action({
-                action: "request_transfer",
-                expert_id: target,
-                reason,
-              })
-            }
-          >
-            Передать запрос оператору
-          </button>
-          <button
-            disabled={busy || !reason.trim()}
-            onClick={() =>
-              void action({ action: "request_coexecutor", reason })
-            }
-          >
-            Запросить соисполнителя
-          </button>
-          <button
-            disabled={busy || !reason.trim()}
-            onClick={() => void action({ action: "request_priority", reason })}
-          >
-            Запросить пересмотр приоритета
-          </button>
-        </section>
-      )}
-      {Boolean(error) && <Problem error={error} />}
-      <Chat appeal={appeal} staff changed={changed} writingAllowed={owns} />
-    </>
+      </aside>
+    </div>
   );
 }

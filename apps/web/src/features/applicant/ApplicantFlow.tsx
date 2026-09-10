@@ -107,7 +107,7 @@ export function ApplicantFlow({
       />
     );
   return (
-    <section className="preview">
+    <section className={`preview applicant-panel ${mode}`}>
       {Boolean(catalog.error) && (
         <Problem error={catalog.error} retry={catalog.reload} young={young} />
       )}
@@ -116,8 +116,14 @@ export function ApplicantFlow({
       )}
       {mode === "return" ? (
         <>
+          <p className="step-label">Возвращение к диалогу</p>
           <h2>Вернуться к своему обращению</h2>
+          <p className="panel-lead">
+            Введите код, который получили после отправки. Он откроет только
+            связанное с ним обращение.
+          </p>
           <form
+            className="return-form"
             onSubmit={(e) => {
               e.preventDefault();
               void enter();
@@ -132,41 +138,73 @@ export function ApplicantFlow({
               spellCheck={false}
               maxLength={80}
               required
+              placeholder="Например, ABCD-EFGH-JKLM-NPQR"
             />
             <button className="primary" disabled={busy || !code.trim()}>
               {busy ? "Открываем…" : "Открыть обращение"}
             </button>
           </form>
-          <button disabled={busy} onClick={() => void enter(true)}>
-            Продолжить открытую сессию
-          </button>
-          <p>
-            Код не восстанавливается. Если он потерян, можно создать новое
-            обращение.
+          <div className="session-return">
+            <div>
+              <strong>Уже открывали обращение здесь?</strong>
+              <p>Можно продолжить без повторного ввода кода.</p>
+            </div>
+            <button disabled={busy} onClick={() => void enter(true)}>
+              Продолжить открытую сессию
+            </button>
+          </div>
+          <p className="privacy-hint">
+            <span aria-hidden="true">○</span> Код не восстанавливается. Если он
+            потерян, можно создать новое обращение.
           </p>
         </>
       ) : (
         <>
+          <p className="step-label">Шаг {entry ? "2" : "1"} из 2</p>
           <h2>Начать можно по-разному</h2>
+          <p className="panel-lead">
+            {entry
+              ? young
+                ? "Расскажи столько, сколько считаешь нужным."
+                : "Расскажите столько, сколько считаете нужным."
+              : "Оба способа приведут к форме обращения."}
+          </p>
           <div className="path-options">
             <button
+              aria-label="Выбрать ситуацию"
               aria-pressed={entry === "category"}
               onClick={() => setEntry("category")}
             >
-              Выбрать ситуацию
+              <span aria-hidden="true" className="option-icon">
+                ◎
+              </span>
+              <span>
+                <strong>Выбрать ситуацию</strong>
+                <small>Подойдёт, если примерно понятно, что происходит</small>
+              </span>
             </button>
             <button
+              aria-label="Рассказать своими словами"
               aria-pressed={entry === "story"}
               onClick={() => {
                 setEntry("story");
                 setCategory("unknown");
               }}
             >
-              Рассказать своими словами
+              <span aria-hidden="true" className="option-icon">
+                ✦
+              </span>
+              <span>
+                <strong>Рассказать своими словами</strong>
+                <small>
+                  Можно начать как получается — без точного названия
+                </small>
+              </span>
             </button>
           </div>
           {entry && catalog.data && (
             <form
+              className="appeal-form"
               onSubmit={(e) => {
                 e.preventDefault();
                 void create();
@@ -202,13 +240,21 @@ export function ApplicantFlow({
                 maxLength={10000}
                 rows={6}
                 required
+                placeholder={
+                  young
+                    ? "Что случилось? Что беспокоит тебя сейчас?"
+                    : "Что случилось? Что беспокоит вас сейчас?"
+                }
               />
-              <p className="muted">
-                Имя, школа и телефон не нужны.{" "}
-                {young
-                  ? "Можно написать так, как тебе удобно."
-                  : "Можно написать так, как вам удобно."}
-              </p>
+              <div className="field-meta">
+                <p className="muted">
+                  Имя, школа и телефон не нужны.{" "}
+                  {young
+                    ? "Можно написать так, как тебе удобно."
+                    : "Можно написать так, как вам удобно."}
+                </p>
+                <span>{text.length} / 10 000</span>
+              </div>
               <details>
                 <summary>Уточняющие вопросы — можно пропустить все</summary>
                 {catalog.data.questions.map((q) => (
@@ -289,8 +335,9 @@ export function ApplicantFlow({
                   </button>
                 </aside>
               )}
-              <label>
-                Файлы (до 5, общий размер до 10 МБ)
+              <label className="upload-field">
+                <span>Добавить изображения</span>
+                <small>До 5 файлов, общий размер до 10 МБ</small>
                 <input
                   type="file"
                   accept="image/jpeg,image/png,image/webp"
@@ -298,7 +345,7 @@ export function ApplicantFlow({
                   onChange={(e) => setFiles(Array.from(e.target.files ?? []))}
                 />
               </label>
-              <p aria-live="polite">
+              <p className="file-count" aria-live="polite">
                 Выбрано файлов: {files.length}.{" "}
                 {files.length > 5 ||
                 files.reduce((sum, f) => sum + f.size, 0) > 10_000_000
@@ -309,9 +356,12 @@ export function ApplicantFlow({
                 Сервер удалит метаданные изображения. Это не скрывает имена и
                 текст на самом скриншоте.
               </p>
-              <button className="primary" disabled={busy || !text.trim()}>
-                {busy ? "Отправляем…" : "Отправить обращение"}
-              </button>
+              <div className="submit-row">
+                <p>После отправки появится секретный код для возвращения.</p>
+                <button className="primary" disabled={busy || !text.trim()}>
+                  {busy ? "Отправляем…" : "Отправить обращение"}
+                </button>
+              </div>
             </form>
           )}
         </>

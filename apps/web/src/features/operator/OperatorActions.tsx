@@ -57,82 +57,177 @@ export function OperatorActions({
   };
   return (
     <section className="operator-actions">
-      <h3>Обработка оператором</h3>
+      <div className="operator-heading">
+        <div>
+          <p className="eyebrow">Решение принимает оператор</p>
+          <h3>Обработка обращения</h3>
+        </div>
+        <span className={`operator-state ${queued ? "queued" : "active"}`}>
+          {queued ? "Нужно распределить" : "В работе у команды"}
+        </span>
+      </div>
       {appeal.is_crisis && <CrisisRoute id={appeal.id} />}
-      <Participants data={collaboration.data} />
-      {collaboration.data?.requests?.map((r) => (
-        <p key={r.id} className="notice">
-          {r.action === "request_coexecutor"
-            ? "Запрос соисполнителя"
-            : "Пересмотр приоритета"}
-          : {r.reason}
-        </p>
-      ))}
+      <div className="operator-attention">
+        {collaboration.data?.requests?.map((r) => (
+          <article key={r.id} className="attention-card">
+            <p className="preserve">
+              <strong>
+                {r.action === "request_coexecutor"
+                  ? "Запрос соисполнителя"
+                  : "Пересмотр приоритета"}
+                :
+              </strong>{" "}
+              {r.reason}
+            </p>
+          </article>
+        ))}
+        {collaboration.data?.complaints?.length ? (
+          <article className="attention-card complaint-card">
+            <strong>Жалобы заявителя</strong>
+            {collaboration.data.complaints.map((item) => (
+              <p key={item.id} className="preserve">
+                {item.text}
+              </p>
+            ))}
+          </article>
+        ) : null}
+        {collaboration.data?.transfers
+          ?.filter((item) => item.status === "pending")
+          .map((item) => (
+            <article className="attention-card transfer-card" key={item.id}>
+              <strong>Запрос передачи</strong>
+              <p className="preserve">{item.reason}</p>
+              <button
+                disabled={busy}
+                onClick={() =>
+                  void act("approve_transfer", {
+                    transfer_id: item.id,
+                    reason: "Подтверждено оператором",
+                  })
+                }
+              >
+                Подтвердить передачу
+              </button>
+            </article>
+          ))}
+      </div>
       {Boolean(collaboration.error) && (
         <Problem error={collaboration.error} retry={collaboration.reload} />
       )}
-      <p>
-        Дальнейшая переписка со специалистом скрыта. Причина возврата доступна
-        отдельно.
-      </p>
-      {active && (
-        <>
-          <label>
-            Причина изменения или публичное объяснение
-            <textarea
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-              maxLength={2000}
-            />
-          </label>
-          <p className="muted">
-            При отклонении или самостоятельном закрытии этот текст увидит
-            заявитель.
-          </p>
-          {queued && (
-            <>
+      {Boolean(error) && <Problem error={error} />}
+
+      <div className="operator-console">
+        <div className="operator-main">
+          <section className="operator-context">
+            <strong>Граница доступа</strong>
+            <p>
+              Дальнейшая переписка со специалистом скрыта. Причины возврата и
+              служебные запросы доступны отдельно.
+            </p>
+          </section>
+          {active && (
+            <section className="decision-panel">
+              <p className="eyebrow">Основание решения</p>
+              <h3>Параметры обращения</h3>
               <label>
-                Категория обращения
-                <select
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                >
-                  {catalog.categories.map((c) => (
-                    <option key={c.slug} value={c.slug}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
+                Причина изменения или публичное объяснение
+                <textarea
+                  value={reason}
+                  onChange={(e) => setReason(e.target.value)}
+                  maxLength={2000}
+                  rows={3}
+                  placeholder="Зафиксируйте основание решения"
+                />
               </label>
-              <button
-                disabled={
-                  busy || category === appeal.category || !reason.trim()
-                }
-                onClick={() => void act("set_category", { category })}
-              >
-                Сохранить категорию
-              </button>
-            </>
+              <p className="muted">
+                При отклонении или самостоятельном закрытии этот текст увидит
+                заявитель.
+              </p>
+              <div className="decision-fields">
+                {queued && (
+                  <div className="decision-field">
+                    <label>
+                      Категория обращения
+                      <select
+                        value={category}
+                        onChange={(e) => setCategory(e.target.value)}
+                      >
+                        {catalog.categories.map((c) => (
+                          <option key={c.slug} value={c.slug}>
+                            {c.name}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <button
+                      disabled={
+                        busy || category === appeal.category || !reason.trim()
+                      }
+                      onClick={() => void act("set_category", { category })}
+                    >
+                      Сохранить категорию
+                    </button>
+                  </div>
+                )}
+                <div className="decision-field">
+                  <label>
+                    Приоритет обращения
+                    <select
+                      value={priority}
+                      onChange={(e) =>
+                        setPriority(e.target.value as typeof priority)
+                      }
+                    >
+                      {Object.entries(enums.priorities).map(([v, l]) => (
+                        <option value={v} key={v}>
+                          {l}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <button
+                    disabled={
+                      busy || priority === appeal.priority || !reason.trim()
+                    }
+                    onClick={() => void act("set_priority", { priority })}
+                  >
+                    Сохранить приоритет
+                  </button>
+                </div>
+              </div>
+              <div className="terminal-actions">
+                {queued ? (
+                  <>
+                    <button
+                      disabled={busy || !reason.trim()}
+                      onClick={() => void act("reject")}
+                    >
+                      Отклонить с объяснением
+                    </button>
+                    <button
+                      disabled={busy || !reason.trim()}
+                      onClick={() => void act("resolve")}
+                    >
+                      Ответить и закрыть
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    disabled={busy || !reason.trim()}
+                    onClick={() => void act("requeue")}
+                  >
+                    Вернуть в очередь с причиной
+                  </button>
+                )}
+              </div>
+            </section>
           )}
-          <label>
-            Приоритет обращения
-            <select
-              value={priority}
-              onChange={(e) => setPriority(e.target.value as typeof priority)}
-            >
-              {Object.entries(enums.priorities).map(([v, l]) => (
-                <option value={v} key={v}>
-                  {l}
-                </option>
-              ))}
-            </select>
-          </label>
-          <button
-            disabled={busy || priority === appeal.priority || !reason.trim()}
-            onClick={() => void act("set_priority", { priority })}
-          >
-            Сохранить приоритет
-          </button>
+        </div>
+
+        <aside
+          className="operator-sidebar"
+          aria-label="Распределение обращения"
+        >
           <Routing
             key={`${appeal.id}-${appeal.category}-${appeal.status}`}
             appeal={appeal}
@@ -143,64 +238,12 @@ export function OperatorActions({
               void act("add_coexecutor", { expert_id })
             }
           />
-          {queued ? (
-            <>
-              <div className="actions">
-                <button
-                  disabled={busy || !reason.trim()}
-                  onClick={() => void act("reject")}
-                >
-                  Отклонить с объяснением
-                </button>
-                <button
-                  disabled={busy || !reason.trim()}
-                  onClick={() => void act("resolve")}
-                >
-                  Ответить и закрыть
-                </button>
-              </div>
-            </>
-          ) : (
-            <button
-              disabled={busy || !reason.trim()}
-              onClick={() => void act("requeue")}
-            >
-              Вернуть в очередь с причиной
-            </button>
-          )}
-        </>
-      )}
-      {Boolean(error) && <Problem error={error} />}
-      {collaboration.data?.complaints?.length ? (
-        <section className="notice">
-          <h3>Жалобы заявителя</h3>
-          {collaboration.data.complaints.map((item) => (
-            <p key={item.id} className="preserve">
-              {item.text}
-            </p>
-          ))}
-        </section>
-      ) : null}
-      {collaboration.data?.transfers
-        ?.filter((item) => item.status === "pending")
-        .map((item) => (
-          <section className="notice" key={item.id}>
-            <h3>Запрос передачи</h3>
-            <p className="preserve">{item.reason}</p>
-            <button
-              disabled={busy}
-              onClick={() =>
-                void act("approve_transfer", {
-                  transfer_id: item.id,
-                  reason: "Подтверждено оператором",
-                })
-              }
-            >
-              Подтвердить передачу
-            </button>
-          </section>
-        ))}
-      <EventHistory key={appeal.version} id={appeal.id} />
+          <div className="operator-participants">
+            <Participants data={collaboration.data} />
+          </div>
+          <EventHistory key={appeal.version} id={appeal.id} />
+        </aside>
+      </div>
     </section>
   );
 }
@@ -226,8 +269,9 @@ function Routing({
   const choice = selected ?? data?.suggested_expert_id ?? undefined;
   const available = data?.experts.some((u) => u.id === choice && u.available);
   return (
-    <section className="notice">
-      <h4>Подсказка назначения</h4>
+    <section className="routing-panel">
+      <p className="eyebrow">Рекомендация системы</p>
+      <h3>Назначение специалиста</h3>
       {Boolean(resource.error) && (
         <Problem error={resource.error} retry={resource.reload} />
       )}

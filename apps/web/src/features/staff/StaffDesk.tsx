@@ -166,8 +166,17 @@ function Queue({
     offset: String(offset),
   }).toString();
   return (
-    <>
-      <div className="filters">
+    <div
+      className={user.role === "operator" ? "operator-queue" : "expert-queue"}
+    >
+      <div className="queue-toolbar">
+        <div>
+          <p className="eyebrow">Рабочая очередь</p>
+          <h2>Найти обращение</h2>
+        </div>
+        <p>Список обновляется автоматически</p>
+      </div>
+      <div className="filters queue-filters">
         <label>
           Статус
           <select
@@ -243,7 +252,7 @@ function Queue({
         offset={offset}
         setOffset={setOffset}
       />
-    </>
+    </div>
   );
 }
 function QueueRows({
@@ -269,7 +278,13 @@ function QueueRows({
       {Boolean(resource.error) && (
         <Problem error={resource.error} retry={resource.reload} />
       )}
-      <button onClick={resource.reload}>Обновить список</button>
+      <div className="queue-summary">
+        <p>
+          Требуют проверки по времени:{" "}
+          <strong>{resource.data?.overdue_count ?? "—"}</strong>
+        </p>
+        <button onClick={resource.reload}>Обновить список</button>
+      </div>
       {!resource.data ? (
         <p role="status">Загружаем обращения…</p>
       ) : (
@@ -277,12 +292,9 @@ function QueueRows({
           {!resource.data.appeals.length && (
             <p className="empty">В этом списке пока нет обращений.</p>
           )}
-          <p>
-            Ожидают дольше порога в выбранном списке:{" "}
-            {resource.data.overdue_count}
-          </p>
           {[true, false].map((crisis) => (
             <section
+              className={`queue-group ${crisis ? "crisis-group" : "regular-group"}`}
               key={String(crisis)}
               aria-label={
                 crisis ? "Кризисные обращения" : "Остальные обращения"
@@ -311,24 +323,32 @@ function QueueRows({
                         }
                         onClick={() => select(a.id)}
                       >
-                        <strong>
-                          {catalog.categories.find((c) => c.slug === a.category)
-                            ?.name ?? a.category}
-                        </strong>
-                        <span>
-                          {enums.applicantTypes[a.applicant_type]} ·{" "}
-                          {enums.appealStatuses[a.status]}
+                        <span className="queue-card-topline">
+                          <strong>
+                            {catalog.categories.find(
+                              (c) => c.slug === a.category,
+                            )?.name ?? a.category}
+                          </strong>
+                          <span className="queue-arrow" aria-hidden="true">
+                            →
+                          </span>
                         </span>
-                        <span>
-                          {enums.priorities[a.priority]} · {date(a.created_at)}{" "}
-                          · ожидание{" "}
-                          {Math.max(
-                            0,
-                            Math.floor(
-                              (Date.now() - Date.parse(a.created_at)) / 60000,
-                            ),
-                          )}{" "}
-                          мин.
+                        <span className="queue-tags">
+                          <span>{enums.applicantTypes[a.applicant_type]}</span>
+                          <span>{enums.appealStatuses[a.status]}</span>
+                          <span>{enums.priorities[a.priority]}</span>
+                        </span>
+                        <span className="queue-wait">
+                          Создано {date(a.created_at)} · ожидание{" "}
+                          <strong>
+                            {Math.max(
+                              0,
+                              Math.floor(
+                                (Date.now() - Date.parse(a.created_at)) / 60000,
+                              ),
+                            )}{" "}
+                            мин.
+                          </strong>
                         </span>
                         {a.overdue && (
                           <strong>Требует проверки: долго нет ответа</strong>
@@ -338,7 +358,7 @@ function QueueRows({
                             Требует внимания · кризис
                           </strong>
                         )}
-                        <span className="muted">{a.id.slice(0, 8)}</span>
+                        <span className="queue-id">№ {a.id.slice(0, 8)}</span>
                       </button>
                     </li>
                   ))}

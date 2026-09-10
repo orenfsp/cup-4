@@ -11,63 +11,71 @@ export function Welcome() {
 
   return (
     <>
-      <section className="hero" aria-labelledby="welcome-title">
-        <p className="eyebrow">Поддержка начинается с разговора</p>
-        <h1 id="welcome-title">
-          Здесь {young ? "тебя" : "вас"}
-          <br />
-          <span>услышат.</span>
-        </h1>
-        <p className="intro">
-          Травля, давление или конфликт — с трудной ситуацией не обязательно
-          оставаться один на один. Иногда первый шаг — просто рассказать.
-        </p>
-        <fieldset className="applicant-types">
-          <legend>
-            {young
-              ? "От чьего лица ты обращаешься?"
-              : "От чьего лица вы обращаетесь?"}
-          </legend>
-          <div className="type-options">
-            {(
-              Object.entries(enums.applicantTypes) as [ApplicantType, string][]
-            ).map(([value, label]) => (
-              <label key={value} className={type === value ? "selected" : ""}>
-                <input
-                  type="radio"
-                  name="applicant"
-                  value={value}
-                  checked={type === value}
-                  onChange={() => setType(value)}
-                />
-                {label}
-              </label>
-            ))}
+      <section
+        className={`hero${preview ? " flow-open" : ""}`}
+        aria-labelledby="welcome-title"
+      >
+        <div className="hero-content">
+          <p className="eyebrow">Поддержка начинается с разговора</p>
+          <h1 id="welcome-title">
+            Здесь {young ? "тебя" : "вас"}
+            <br />
+            <span>услышат.</span>
+          </h1>
+          <p className="intro">
+            Травля, давление или конфликт — с трудной ситуацией не обязательно
+            оставаться один на один. Иногда первый шаг — просто рассказать.
+          </p>
+          <fieldset className="applicant-types">
+            <legend>
+              {young
+                ? "От чьего лица ты обращаешься?"
+                : "От чьего лица вы обращаетесь?"}
+            </legend>
+            <div className="type-options">
+              {(
+                Object.entries(enums.applicantTypes) as [
+                  ApplicantType,
+                  string,
+                ][]
+              ).map(([value, label]) => (
+                <label key={value} className={type === value ? "selected" : ""}>
+                  <input
+                    type="radio"
+                    name="applicant"
+                    value={value}
+                    checked={type === value}
+                    onChange={() => setType(value)}
+                  />
+                  {label}
+                </label>
+              ))}
+            </div>
+          </fieldset>
+          <div className="entry-actions">
+            <button
+              className="primary"
+              onClick={() => setPreview("start")}
+              aria-expanded={preview === "start"}
+              aria-controls="entry-preview"
+            >
+              Рассказать о ситуации <span aria-hidden="true">↗</span>
+            </button>
+            <button
+              className="secondary"
+              onClick={() => setPreview("return")}
+              aria-expanded={preview === "return"}
+              aria-controls="entry-preview"
+            >
+              У меня есть код <span aria-hidden="true">→</span>
+            </button>
           </div>
-        </fieldset>
-        <div className="entry-actions">
-          <button
-            className="primary"
-            onClick={() => setPreview("start")}
-            aria-expanded={preview === "start"}
-            aria-controls="entry-preview"
-          >
-            Рассказать о ситуации <span aria-hidden="true">↗</span>
-          </button>
-          <button
-            className="secondary"
-            onClick={() => setPreview("return")}
-            aria-expanded={preview === "return"}
-            aria-controls="entry-preview"
-          >
-            У меня есть код <span aria-hidden="true">→</span>
-          </button>
+          <p className="prototype-note">
+            Учебный прототип. Обращения сохраняются. Здесь можно получить
+            поддержку; сервис не заменяет экстренные службы.
+          </p>
         </div>
-        <p className="prototype-note">
-          Учебный прототип. Обращения сохраняются. Здесь можно получить
-          поддержку; сервис не заменяет экстренные службы.
-        </p>
-        <div id="entry-preview">
+        <div id="entry-preview" className="entry-preview">
           {preview && (
             <ApplicantFlow
               key={`${preview}-${type}`}
